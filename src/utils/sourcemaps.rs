@@ -108,6 +108,23 @@ fn guess_sourcemap_reference(sourcemaps: &HashSet<String>, min_url: &str) -> Res
     let map_ext = "map";
     let (path, basename, ext) = split_url(min_url);
 
+    // foo.js -> ../maps/foo.js.map
+    let mut rv = String::new();
+    let mut part_iter = min_url.rsplitn(3, '/');
+    let js = part_iter.next().unwrap_or("");
+    part_iter.next();
+    let root_dir = part_iter.next();
+    if let Some(path) = root_dir {
+        rv.push_str(path);
+        rv.push('/');
+    }
+    rv.push_str("maps/");
+    rv.push_str(js);
+    rv.push_str(".map");
+    if sourcemaps.contains(&rv) {
+        return Ok(rv)
+    }
+
     // foo.min.js -> foo.map
     if sourcemaps.contains(&unsplit_url(path, basename, Some("map"))) {
         return Ok(unsplit_url(None, basename, Some("map")));
